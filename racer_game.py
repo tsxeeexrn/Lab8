@@ -13,12 +13,13 @@ background = pygame.image.load("AnimatedStreet.png")
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Racer")
 
+
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("Enemy.png")
         self.rect = self.image.get_rect(center=(random.randint(40, SCREEN_WIDTH - 40), 0))
-    
+
     def move(self):
         global SCORE
         self.rect.move_ip(0, SPEED)
@@ -27,34 +28,31 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.top = 0
             self.rect.center = (random.randint(40, SCREEN_WIDTH - 40), 0)
 
+
 class Coin(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.transform.scale(pygame.image.load("coin.png"), (40, 40))
-        self.rect = self.image.get_rect(center=(random.randint(40, SCREEN_WIDTH - 40), random.randint(40, SCREEN_HEIGHT - 40)))
-    
-    def move(self):
-        global COINS, SPEED, c1, c2, c3, c4, c5
-        COINS += 3 if self.rect.bottom < SCREEN_HEIGHT // 3 else 2 if self.rect.bottom < SCREEN_HEIGHT // 1.5 else 1
-        if not c1 and COINS >= 10: SPEED += 1; c1 = True
-        if not c2 and COINS >= 20: SPEED += 1; c2 = True
-        if not c3 and COINS >= 30: SPEED += 1; c3 = True
-        if not c4 and COINS >= 40: SPEED += 1; c4 = True
-        if not c5 and COINS >= 50: SPEED += 1; c5 = True
+        self.rect = self.image.get_rect(
+            center=(random.randint(40, SCREEN_WIDTH - 40), random.randint(40, SCREEN_HEIGHT - 40)))
+
+    def reset_position(self):
         self.rect.center = (random.randint(40, SCREEN_WIDTH - 40), random.randint(40, SCREEN_HEIGHT - 40))
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load("Player.png")
         self.rect = self.image.get_rect(center=(160, 520))
-    
+
     def move(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] and self.rect.left > 0: self.rect.move_ip(-5, 0)
         if keys[pygame.K_RIGHT] and self.rect.right < SCREEN_WIDTH: self.rect.move_ip(5, 0)
         if keys[pygame.K_UP] and self.rect.top > 0: self.rect.move_ip(0, -5)
         if keys[pygame.K_DOWN] and self.rect.bottom < SCREEN_HEIGHT: self.rect.move_ip(0, 5)
+
 
 P1, E1, C1 = Player(), Enemy(), Coin()
 enemies, coins, all_sprites = pygame.sprite.Group(E1), pygame.sprite.Group(C1), pygame.sprite.Group(P1, E1, C1)
@@ -68,20 +66,32 @@ while True:
             sys.exit()
         if event.type == pygame.USEREVENT + 1:
             SPEED += 0.1
-    
+
     if pygame.sprite.spritecollideany(P1, enemies):
         time.sleep(2)
-    
+
+    if pygame.sprite.spritecollideany(P1, coins):
+        COINS += 1
+        C1.reset_position()
+
+    if not c1 and COINS >= 10: SPEED += 1; c1 = True
+    if not c2 and COINS >= 20: SPEED += 1; c2 = True
+    if not c3 and COINS >= 30: SPEED += 1; c3 = True
+    if not c4 and COINS >= 40: SPEED += 1; c4 = True
+    if not c5 and COINS >= 50: SPEED += 1; c5 = True
+
     background_y = (background_y + SPEED) % background.get_height()
     screen.blit(background, (0, background_y))
     screen.blit(background, (0, background_y - background.get_height()))
-    
+
     screen.blit(font.render(str(SCORE), True, (0, 0, 0)), (10, 10))
     screen.blit(font.render(str(COINS), True, (0, 0, 0)), (370, 10))
-    
+
     for entity in all_sprites:
         screen.blit(entity.image, entity.rect)
-        entity.move()
-    
+        if isinstance(entity, Player) or isinstance(entity, Enemy):
+            entity.move()
+
     pygame.display.update()
     clock.tick(FPS)
+ 
